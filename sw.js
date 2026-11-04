@@ -1,6 +1,6 @@
 // Garde la page en mémoire dans le navigateur de la Tesla : elle s'ouvre ensuite même sans réseau
 // (parking souterrain, Wi-Fi du T2C sans internet). À chaque ouverture avec réseau, la copie est mise à jour.
-const CACHE = 'carplay-v1';
+const CACHE = 'carplay-v2';
 const FILES = ['./', './index.html', './app.js', './decoder-worker.js'];
 
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES))); self.skipWaiting(); });

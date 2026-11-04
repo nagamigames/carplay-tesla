@@ -125,15 +125,19 @@ function connect() {
   status('Connexion au boîtier…', LOCAL ? 'Le Mac doit être sur le Wi-Fi du T2C' : 'La Tesla doit être sur le Wi-Fi du T2C');
   ws = new WebSocket(WS_URL, 'tsl');
   ws.binaryType = 'arraybuffer';
-  ws.onopen = () => { fails = 0; $('unlock').hidden = true; log(LOCAL ? 'Relais local OK, appel du boîtier…' : 'Boîtier joint'); configSent = false; hello(); };
+  // Le navigateur peut rester bloqué sans jamais répondre (certificat, autorisation réseau local) : on coupe après 4 s.
+  const sock = ws;
+  const guard = setTimeout(() => { if (sock.readyState === 0) { log('Aucune réponse du boîtier en 4 s'); sock.close(); } }, 4000);
+  ws.onopen = () => { clearTimeout(guard); fails = 0; $('unlock').hidden = true; log(LOCAL ? 'Relais local OK, appel du boîtier…' : 'Boîtier joint'); configSent = false; hello(); };
   ws.onmessage = onMessage;
   ws.onclose = (e) => {
+    clearTimeout(guard);
     fails++;
     log(`Coupé (${e.code}${e.reason ? ' : ' + e.reason : ''}), nouvel essai dans 1 s`);
     setLink(-1);
     // Connexion directe refusée plusieurs fois : le navigateur n'a sans doute pas encore accepté le certificat du boîtier.
-    if (!LOCAL && fails >= 3) { status('Le boîtier ne répond pas', 'Si c\'est la première fois, autorise son certificat :'); $('unlock').hidden = false; }
-    else status('Boîtier injoignable', 'Nouvel essai…');
+    if (!LOCAL && fails >= 2) { status('Le boîtier ne répond pas (essai ' + fails + ')', 'Si c\'est la première fois, autorise son certificat :'); $('unlock').hidden = false; }
+    else status('Boîtier injoignable (essai ' + fails + ')', 'Nouvel essai…');
     setTimeout(connect, 1000);
   };
 }
@@ -204,6 +208,7 @@ function startWorker() {
 setInterval(() => {
   const want = wantedSize();
   $('hud').textContent =
+    `navigateur  Chrome ${(navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] || '?'}  sécurisé ${isSecureContext ? 'oui' : 'non'}  cible ${WS_URL}\n` +
     `zone page   ${innerWidth}×${innerHeight} (dpr ${devicePixelRatio.toFixed(2)})\n` +
     `demandé     ${want.w}×${want.h}\n` +
     `reçu        ${frameSize.w}×${frameSize.h}  ${dec.codec || ''}\n` +
