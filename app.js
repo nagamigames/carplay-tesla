@@ -117,7 +117,8 @@ function onMessage(ev) {
 
 // Sur le Mac (localhost) : on passe par le relais. Ailleurs (Tesla) : connexion directe au boîtier.
 const LOCAL = ['localhost', '127.0.0.1'].includes(location.hostname);
-const BOX = Q.get('box') || '192.168.3.1';
+// Le navigateur Tesla refuse les adresses locales (192.168.x.x) : on vise tespush.com, que le boîtier intercepte.
+const BOX = Q.get('box') || 'tespush.com';
 const WS_URL = LOCAL && !Q.has('box') ? `ws://${location.host}/tsl` : `wss://${BOX}/`;
 let fails = 0;
 
@@ -136,7 +137,7 @@ function connect() {
     log(`Coupé (${e.code}${e.reason ? ' : ' + e.reason : ''}), nouvel essai dans 1 s`);
     setLink(-1);
     // Connexion directe refusée plusieurs fois : le navigateur n'a sans doute pas encore accepté le certificat du boîtier.
-    if (!LOCAL && fails >= 2) { status('Le boîtier ne répond pas (essai ' + fails + ')', 'Si c\'est la première fois, autorise son certificat :'); $('unlock').hidden = false; }
+    if (!LOCAL && fails >= 2) { status('Le boîtier ne répond pas (essai ' + fails + ')', 'Si c\'est la première fois, autorise son certificat :'); $('unlock').href = `https://${BOX}/`; $('unlock').hidden = false; }
     else status('Boîtier injoignable (essai ' + fails + ')', 'Nouvel essai…');
     setTimeout(connect, 1000);
   };
