@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>CarPlay maison</title>
+<style>
+  :root { --bg: #000; --fg: #f2f2f2; --dim: #8a8a8a; --ok: #3ddc84; --warn: #ffb020; --bad: #ff5a5a; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); overflow: hidden;
+    font: 15px/1.4 -apple-system, system-ui, sans-serif; touch-action: none; user-select: none; }
+  #stage { position: fixed; inset: 0; display: grid; place-items: center; }
+  /* L'image garde toujours son format : jamais étirée, jamais coupée. */
+  #screen { max-width: 100%; max-height: 100%; width: auto; height: auto; image-rendering: auto; display: none; }
+  #status { position: fixed; inset: 0; display: grid; place-items: center; text-align: center; pointer-events: none; }
+  #status b { display: block; font-size: 22px; margin-bottom: 6px; }
+  #status span { color: var(--dim); }
+  #unlock { display: block; margin: 18px auto 0; max-width: 520px; padding: 14px 18px; border-radius: 12px;
+    background: #1f6feb; color: #fff; text-decoration: none; pointer-events: auto; font-size: 17px; }
+  #unlock[hidden] { display: none; }
+  #hud { position: fixed; top: 8px; left: 8px; padding: 8px 10px; border-radius: 8px; background: rgba(0,0,0,.7);
+    font: 12px/1.5 ui-monospace, Menlo, monospace; white-space: pre; display: none; pointer-events: none; }
+  #hudBtn { position: fixed; top: 6px; right: 6px; width: 34px; height: 34px; border-radius: 17px; border: 0;
+    background: rgba(255,255,255,.12); color: var(--fg); font-size: 16px; }
+  #log { position: fixed; left: 8px; bottom: 8px; right: 8px; max-height: 30%; overflow: auto; font: 12px/1.4 ui-monospace, Menlo, monospace;
+    color: var(--dim); display: none; pointer-events: none; }
+  .on #hud, .on #log { display: block; }
+</style>
+</head>
+<body>
+<div id="stage"><canvas id="screen"></canvas></div>
+<div id="status"><div><b id="st1">Connexion au boîtier…</b><span id="st2"></span>
+  <a id="unlock" hidden href="https://192.168.3.1/" target="_blank">Ouvrir le boîtier → « Paramètres avancés » → « Continuer », puis revenir ici</a></div></div>
+<pre id="hud"></pre>
+<div id="log"></div>
+<button id="hudBtn" aria-label="Infos techniques">i</button>
+<script src="app.js"></script>
+</body>
+</html>
