@@ -11,6 +11,7 @@ let frameSize = { w: 0, h: 0 }, configSent = false, lastKeyAsk = 0;
 const net = { frames: 0, bytes: 0, gapMax: 0, last: 0 };
 let dec = {};
 const phone = { bt: undefined, seen: undefined };
+let boxRes = '?';
 
 function log(s) {
   const d = document.createElement('div');
@@ -61,11 +62,15 @@ function setLink(l) {
 
 function onJson(type, j) {
   if (type === 1) {
+    if (typeof j.pixel === 'number') boxRes = ['?', 'HD', 'Fast', 'Auto'][j.pixel] || j.pixel;
     log(`État : mode ${j.vid ? 'vidéo' : 'images'}, fps ${j.fps}, résolution ${j.pixel}, liaison ${j.link}, firmware ${j.SW || '?'}`);
     if (!configSent) {
       configSent = true;
       if (!j.vid) { log('→ passage en mode vidéo'); setting(11, 1); }
       if (j.fps === 0) { log('→ fréquence rapide'); setting(9, 1); }
+      // ?res=hd|fast|auto : choisit le réglage « Resolution » du boîtier (pour comparer netteté et retard).
+      const RES = { hd: 1, fast: 2, auto: 3 }, want = RES[(Q.get('res') || '').toLowerCase()];
+      if (want && j.pixel !== want) { log(`→ résolution boîtier : ${Q.get('res')}`); setting(2, want); }
     }
     if (typeof j.link === 'number') setLink(j.link);
   } else if (type === 3) {
@@ -221,7 +226,7 @@ setInterval(() => {
     `navigateur  Chrome ${(navigator.userAgent.match(/Chrome\/(\d+)/) || [])[1] || '?'}  sécurisé ${isSecureContext ? 'oui' : 'non'}  cible ${WS_URL}\n` +
     `zone page   ${innerWidth}×${innerHeight} (dpr ${devicePixelRatio.toFixed(2)})\n` +
     `demandé     ${want.w}×${want.h}\n` +
-    `reçu        ${frameSize.w}×${frameSize.h}  ${dec.codec || ''}\n` +
+    `reçu        ${frameSize.w}×${frameSize.h}  ${dec.codec || ''}  réglage boîtier ${boxRes}\n` +
     `matériel    ${dec.hw || '?'}\n` +
     `images/s    reçues ${net.frames}  affichées ${dec.decoded ?? 0}  jetées ${dec.dropped ?? 0}\n` +
     `débit       ${(net.bytes * 8 / 1e6).toFixed(1)} Mbit/s\n` +
