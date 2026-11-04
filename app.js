@@ -49,8 +49,14 @@ function setLink(l) {
   if (l === link) return;
   log(`Liaison : ${link} → ${l}`);
   link = l;
+  $('resume').hidden = true;
   if (l > 1) { cmd(0); status(''); canvas.style.display = 'block'; worker.postMessage({ reset: true }); }
-  else { canvas.style.display = 'none'; status(l === 1 ? 'iPhone détecté…' : 'En attente de l\'iPhone', 'Bluetooth de l\'iPhone allumé, près du boîtier'); }
+  else if (l === 1) {
+    // iPhone connecté mais CarPlay en pause (ex. icône « voiture » touchée) : on redemande l'image, comme la page du boîtier.
+    canvas.style.display = 'none'; cmd(0);
+    status('CarPlay en pause', 'L\'iPhone est connecté. Reprise automatique…'); $('resume').hidden = false;
+  }
+  else { canvas.style.display = 'none'; status('En attente de l\'iPhone', 'Bluetooth de l\'iPhone allumé, près du boîtier'); }
 }
 
 function onJson(type, j) {
@@ -189,6 +195,9 @@ canvas.addEventListener('pointercancel', (e) => { if (down) { flushMove(); touch
 canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
 $('hudBtn').onclick = () => document.body.classList.toggle('on');
+$('resume').onclick = () => { log('Reprise de CarPlay demandée'); cmd(0); };
+// Toujours en pause après 3 s : on redemande une fois.
+setInterval(() => { if (link === 1) cmd(0); }, 3000);
 if (Q.has('debug')) document.body.classList.add('on');
 
 function startWorker() {
